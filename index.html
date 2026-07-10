@@ -3,58 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestión de Conductores y Automóviles</title>
+  <title>Panel de Gestión Automotriz</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
 
   <div class="container my-5">
-    <h1 class="text-center mb-4">Panel de Control - API Automotriz</h1>
+    <h1 class="text-center mb-4 fw-bold text-dark">Panel de Control - Consultas</h1>
     
     <div class="row g-3 mb-4">
       <div class="col-md-3">
-        <button class="btn btn-primary w-100" onclick="obtenerConductores()">Ver Conductores</button>
+        <button class="btn btn-primary w-100 py-2 fw-semibold" onclick="obtenerConductores()">Ver Conductores</button>
       </div>
       <div class="col-md-3">
-        <button class="btn btn-success w-100" onclick="obtenerAutomoviles()">Ver Automóviles</button>
+        <button class="btn btn-success w-100 py-2 fw-semibold" onclick="obtenerAutomoviles()">Ver Automóviles</button>
       </div>
       <div class="col-md-3">
-        <button class="btn btn-warning w-100" onclick="obtenerSolitos()">Ver "Solitos"</button>
+        <button class="btn btn-warning w-100 py-2 fw-semibold text-white" onclick="obtenerSolitos()">Ver "Solitos"</button>
       </div>
     </div>
 
-    <div class="row g-3 mb-4 p-3 bg-white rounded shadow-sm">
+    <div class="row g-3 mb-4 p-3 bg-white rounded shadow-sm border">
       <div class="col-md-4">
-        <label class="form-label">Conductores sin auto (Menores que edad):</label>
+        <label class="form-label fw-bold text-secondary">Conductores sin auto (Menores de X años):</label>
         <div class="input-group">
           <input type="number" id="edadInput" class="form-control" placeholder="Ej: 30">
-          <button class="btn btn-outline-secondary" onclick="buscarSinAuto()">Buscar</button>
+          <button class="btn btn-outline-primary" onclick="buscarSinAuto()">Buscar</button>
         </div>
       </div>
       
       <div class="col-md-4">
-        <label class="form-label">Buscar Auto por Patente:</label>
+        <label class="form-label fw-bold text-secondary">Buscar Auto por Patente:</label>
         <div class="input-group">
           <input type="text" id="patenteInput" class="form-control" placeholder="Ej: HXJH55">
-          <button class="btn btn-outline-secondary" onclick="buscarPorPatente()">Buscar</button>
+          <button class="btn btn-outline-success" onclick="buscarPorPatente()">Buscar</button>
         </div>
       </div>
 
       <div class="col-md-4">
-        <label class="form-label">Buscar por Inicio de Patente:</label>
+        <label class="form-label fw-bold text-secondary">Buscar por Letra Inicial de Patente:</label>
         <div class="input-group">
           <input type="text" id="inicioInput" class="form-control" placeholder="Ej: H" maxlength="2">
-          <button class="btn btn-outline-secondary" onclick="buscarPorInicioPatente()">Buscar</button>
+          <button class="btn btn-outline-warning" onclick="buscarPorInicioPatente()">Buscar</button>
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0" id="resultadoTitulo">Resultados de la Consulta</h5>
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white py-3">
+        <h5 class="mb-0 fw-bold" id="resultadoTitulo">Resultados de la Consulta</h5>
       </div>
       <div class="card-body" id="resultadoContenido">
-        <p class="text-muted text-center">Presiona algún botón o realiza una búsqueda para ver los datos.</p>
+        <p class="text-muted text-center my-4">Presiona algún botón superior o realiza una búsqueda para visualizar los registros.</p>
       </div>
     </div>
   </div>
@@ -62,19 +62,21 @@
   <script>
     const API_URL = 'http://localhost:3000';
 
-    // Función auxiliar para renderizar tablas HTML dinámicamente
     function renderTabla(datos, columnas) {
       if (!datos || datos.length === 0) {
-        return '<div class="alert alert-info">No se encontraron registros.</div>';
+        return '<div class="alert alert-info m-0 text-center">No se encontraron registros para esta consulta.</div>';
       }
       
-      let html = `<div class="table-responsive"><table class="table table-striped table-hover"><thead><tr>`;
-      columnas.forEach(col => html += `<th>${col.toUpperCase().replace('_', ' ')}</th>`);
+      let html = `<div class="table-responsive"><table class="table table-striped table-hover align-middle m-0"><thead><tr>`;
+      columnas.forEach(col => html += `<th class="bg-light">${col.toUpperCase().replace('_', ' ')}</th>`);
       html += `</tr></thead><tbody>`;
       
       datos.forEach(fila => {
         html += `<tr>`;
-        columnas.forEach(col => html += `<td>${fila[col] !== null && fila[col] !== undefined ? fila[col] : '<span class="text-muted">N/A</span>'}</td>`);
+        columnas.forEach(col => {
+          let valor = fila[col];
+          html += `<td>${valor !== null && valor !== undefined ? valor : '<span class="text-muted italic">Ninguno</span>'}</td>`;
+        });
         html += `</tr>`;
       });
       
@@ -82,67 +84,85 @@
       return html;
     }
 
-    // GET /conductores
     async function obtenerConductores() {
-      document.getElementById('resultadoTitulo').innerText = "Lista de Conductores";
-      const res = await fetch(`${API_URL}/conductores`);
-      const data = await res.json();
-      document.getElementById('resultadoContenido').innerHTML = renderTabla(data, ['nombre', 'edad']);
+      document.getElementById('resultadoTitulo').innerText = "Lista General de Conductores";
+      try {
+        const res = await fetch(`${API_URL}/conductores`);
+        const data = await res.json();
+        document.getElementById('resultadoContenido').innerHTML = renderTabla(data, ['nombre', 'edad']);
+      } catch (err) {
+        document.getElementById('resultadoContenido').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+      }
     }
 
-    // GET /automoviles
     async function obtenerAutomoviles() {
-      document.getElementById('resultadoTitulo').innerText = "Lista de Automóviles";
-      const res = await fetch(`${API_URL}/automoviles`);
-      const data = await res.json();
-      document.getElementById('resultadoContenido').innerHTML = renderTabla(data, ['marca', 'patente', 'nombre_conductor']);
+      document.getElementById('resultadoTitulo').innerText = "Lista General de Automóviles";
+      try {
+        const res = await fetch(`${API_URL}/automoviles`);
+        const data = await res.json();
+        document.getElementById('resultadoContenido').innerHTML = renderTabla(data, ['marca', 'patente', 'nombre_conductor']);
+      } catch (err) {
+        document.getElementById('resultadoContenido').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+      }
     }
 
-    // GET /conductoressinauto?edad=X
     async function buscarSinAuto() {
       const edad = document.getElementById('edadInput').value;
-      if(!edad) return alert('Por favor ingresa una edad');
+      if(!edad) return alert('Ingresa una edad válida.');
       
       document.getElementById('resultadoTitulo').innerText = `Conductores sin auto menores de ${edad} años`;
-      const res = await fetch(`${API_URL}/conductoressinauto?edad=${edad}`);
-      const data = await res.json();
-      document.getElementById('resultadoContenido').innerHTML = renderTabla(data, ['nombre', 'edad']);
+      try {
+        const res = await fetch(`${API_URL}/conductoressinauto?edad=${edad}`);
+        const data = await res.json();
+        document.getElementById('resultadoContenido').innerHTML = renderTabla(data, ['nombre', 'edad']);
+      } catch (err) {
+        document.getElementById('resultadoContenido').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+      }
     }
 
-    // GET /solitos
     async function obtenerSolitos() {
-      document.getElementById('resultadoTitulo').innerText = "Sección 'Solitos' (Sin emparejar)";
-      const res = await fetch(`${API_URL}/solitos`);
-      const data = await res.json();
+      document.getElementById('resultadoTitulo').innerText = "Registros 'Solitos' (Sin emparejamiento mutuo)";
+      try {
+        const res = await fetch(`${API_URL}/solitos`);
+        const data = await res.json();
 
-      let html = `<h6 class="fw-bold text-secondary">Conductores sin Automóvil:</h6>`;
-      html += renderTabla(data.conductores_sin_auto, ['nombre', 'edad']);
-      html += `<h6 class="mt-4 fw-bold text-secondary">Automóviles sin Conductor Registrado:</h6>`;
-      html += renderTabla(data.automoviles_sin_conductor, ['marca', 'patente', 'nombre_conductor']);
-      
-      document.getElementById('resultadoContenido').innerHTML = html;
+        let html = `<h6 class="fw-bold text-primary mb-2">Conductores sin automóvil:</h6>`;
+        html += renderTabla(data.conductores_sin_auto, ['nombre', 'edad']);
+        html += `<h6 class="mt-4 fw-bold text-danger mb-2">Automóviles sin conductor (No registrado):</h6>`;
+        html += renderTabla(data.automoviles_sin_conductor, ['marca', 'patente', 'nombre_conductor']);
+        
+        document.getElementById('resultadoContenido').innerHTML = html;
+      } catch (err) {
+        document.getElementById('resultadoContenido').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+      }
     }
 
-    // GET /auto?patente=X
     async function buscarPorPatente() {
       const patente = document.getElementById('patenteInput').value;
-      if(!patente) return alert('Por favor ingresa una patente');
+      if(!patente) return alert('Ingresa una patente.');
 
       document.getElementById('resultadoTitulo').innerText = `Resultado para Patente: ${patente}`;
-      const res = await fetch(`${API_URL}/auto?patente=${patente}`);
-      const data = await res.json();
-      document.getElementById('resultadoContenido').innerHTML = renderTabla(data, ['marca', 'patente', 'nombre_conductor', 'conductor_edad']);
+      try {
+        const res = await fetch(`${API_URL}/auto?patente=${patente}`);
+        const data = await res.json();
+        document.getElementById('resultadoContenido').innerHTML = renderTabla(data, ['marca', 'patente', 'nombre_conductor', 'conductor_edad']);
+      } catch (err) {
+        document.getElementById('resultadoContenido').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+      }
     }
 
-    // GET /auto?iniciopatente=X
     async function buscarPorInicioPatente() {
       const letra = document.getElementById('inicioInput').value;
-      if(!letra) return alert('Por favor ingresa la letra inicial');
+      if(!letra) return alert('Ingresa una letra inicial.');
 
-      document.getElementById('resultadoTitulo').innerText = `Automóviles que empiezan con: ${letra}`;
-      const res = await fetch(`${API_URL}/auto?iniciopatente=${letra}`);
-      const data = await res.json();
-      document.getElementById('resultadoContenido').innerHTML = renderTabla(data, ['marca', 'patente', 'nombre_conductor', 'conductor_edad']);
+      document.getElementById('resultadoTitulo').innerText = `Automóviles que empiezan con: "${letra}"`;
+      try {
+        const res = await fetch(`${API_URL}/auto?iniciopatente=${letra}`);
+        const data = await res.json();
+        document.getElementById('resultadoContenido').innerHTML = renderTabla(data, ['marca', 'patente', 'nombre_conductor', 'conductor_edad']);
+      } catch (err) {
+        document.getElementById('resultadoContenido').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+      }
     }
   </script>
 </body>
